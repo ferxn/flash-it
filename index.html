@@ -2,12 +2,10 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Studio Sync Rig Pro - P2P Mobile</title>
-  <!-- PeerJS & QRCode Libraries -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Studio Sync Rig Pro - Real Camera & Flash</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  
   <style>
     :root {
       --bg-main: #0f172a;
@@ -16,95 +14,125 @@
       --text-muted: #94a3b8;
       --accent: #38bdf8;
       --danger: #ef4444;
-      --border: #334155;
       --success: #22c55e;
+      --border: #334155;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     body {
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg-main);
       color: var(--text-primary);
-      padding: 1rem;
+      padding: 12px;
       display: flex;
       justify-content: center;
+      min-height: 100vh;
     }
     .container {
       width: 100%;
       max-width: 480px;
       background: var(--bg-card);
       border-radius: 16px;
-      padding: 1.5rem;
+      padding: 1rem;
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
       border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
-    header { text-align: center; margin-bottom: 1rem; }
-    header h1 { font-size: 1.4rem; color: var(--accent); }
-    .subtitle { font-size: 0.8rem; color: var(--text-muted); }
+    header { text-align: center; }
+    header h1 { font-size: 1.3rem; color: var(--accent); }
+    .subtitle { font-size: 0.75rem; color: var(--text-muted); }
     
-    /* Connection Box */
     .connection-box {
       background: var(--bg-main);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 1rem;
+      padding: 10px;
       text-align: center;
-      margin-bottom: 1rem;
     }
-    #qrcode { display: flex; justify-content: center; margin: 10px 0; }
-    #qrcode img { border: 8px solid white; border-radius: 8px; }
-    .peer-status { font-size: 0.85rem; font-weight: bold; color: var(--success); margin-top: 5px; }
+    #qrcode { display: flex; justify-content: center; margin: 8px 0; }
+    #qrcode img { border: 6px solid white; border-radius: 6px; }
+    .peer-status { font-size: 0.8rem; font-weight: bold; color: var(--success); }
 
     .role-selector {
-      display: flex; gap: 8px; margin-bottom: 1rem;
+      display: flex; gap: 6px;
       background: var(--bg-main); padding: 4px; border-radius: 10px;
     }
     .role-btn {
-      flex: 1; padding: 10px; border: none; border-radius: 8px;
-      background: transparent; color: var(--text-muted); font-weight: 600;
+      flex: 1; padding: 10px 4px; border: none; border-radius: 8px;
+      background: transparent; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;
       cursor: pointer; transition: all 0.2s ease;
     }
     .role-btn.active { background: var(--accent); color: var(--bg-main); }
-    .panel { display: none; flex-direction: column; gap: 1rem; margin-bottom: 1rem; }
+    
+    .panel { display: none; flex-direction: column; gap: 10px; }
     .panel.active { display: flex; }
     .field-group { display: flex; flex-direction: column; gap: 4px; }
-    label { font-size: 0.85rem; color: var(--text-muted); }
+    label { font-size: 0.8rem; color: var(--text-muted); }
     input[type="number"], input[type="range"] {
       width: 100%; padding: 10px; border-radius: 8px;
       border: 1px solid var(--border); background: var(--bg-main); color: var(--text-primary);
     }
-    .btn-primary {
-      width: 100%; padding: 16px; border: none; border-radius: 12px;
-      font-size: 1.1rem; font-weight: bold; cursor: pointer;
+    .btn-action {
+      width: 100%; padding: 14px; border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: bold; cursor: pointer; transition: transform 0.1s ease;
     }
-    .btn-primary.danger { background: var(--danger); color: white; }
+    .btn-action.danger { background: var(--danger); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }
+    .btn-action.accent { background: var(--accent); color: var(--bg-main); }
+    .btn-action:active { transform: scale(0.97); }
+
+    /* Camera Feed Area */
+    .viewfinder-container {
+      position: relative;
+      width: 100%;
+      height: 220px;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .viewfinder-overlay {
+      position: absolute;
+      inset: 0;
+      border: 2px dashed rgba(56, 189, 248, 0.4);
+      margin: 15px;
+      border-radius: 8px;
+      pointer-events: none;
+    }
+
+    .gallery-preview {
+      display: flex; gap: 8px; overflow-x: auto; padding: 4px 0;
+    }
+    .gallery-preview img {
+      width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border);
+    }
+
     .console-box {
       background: var(--bg-main); border: 1px solid var(--border);
-      border-radius: 8px; padding: 10px; font-family: monospace;
-      font-size: 0.75rem; height: 100px; overflow-y: auto; color: #34d399;
-    }
-    #flash-overlay {
-      position: fixed; inset: 0; background: white; opacity: 0;
-      pointer-events: none; transition: opacity 0.01s ease-out; z-index: 9999;
+      border-radius: 8px; padding: 8px; font-family: monospace;
+      font-size: 0.72rem; height: 90px; overflow-y: auto; color: #34d399;
     }
   </style>
 </head>
 <body>
 
-  <div id="flash-overlay"></div>
-
   <div class="container">
     <header>
-      <h1>🎛️ Studio Sync Rig Pro</h1>
-      <p class="subtitle">Multi-Device WebRTC P2P Sync</p>
+      <h1>📸 Studio Sync Rig Pro</h1>
+      <p class="subtitle">Hardware Interfacing: Real Camera & Flash</p>
     </header>
 
-    <!-- P2P QR Code Section -->
     <div class="connection-box">
       <div id="qr-container">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">เอามือถือเพื่อนสแกน QR Code เพื่อเชื่อมต่อ:</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">ให้มือถือเครื่องอื่นสแกน QR Code เพื่อเข้าร่วม:</p>
         <div id="qrcode"></div>
       </div>
-      <div class="peer-status" id="peer-status">กำลังสร้างห้อง P2P...</div>
+      <div class="peer-status" id="peer-status">กำลังเริ่มต้นระบบ P2P...</div>
     </div>
 
     <nav class="role-selector">
@@ -114,31 +142,46 @@
     </nav>
 
     <main>
+      <!-- Main Controller Panel -->
       <section id="panel-main" class="panel active">
         <div class="field-group">
-          <label>จำนวนรอบการยิง (Burst Shots):</label>
+          <label>จำนวนภาพที่ถ่าย (Burst Count):</label>
           <input type="number" id="burst-count" value="3" min="1" max="10">
         </div>
         <div class="field-group">
-          <label>ระยะห่างแต่ละรอบ (Interval ms):</label>
-          <input type="number" id="burst-interval" value="500" min="150" step="50">
+          <label>ระยะห่างแต่ละภาพ (Interval ms):</label>
+          <input type="number" id="burst-interval" value="600" min="200" step="50">
         </div>
-        <button id="btn-fire" class="btn-primary danger">🔥 FIRE ALL DEVICES</button>
+        <button id="btn-fire" class="btn-action danger">🔥 FIRE HARDWARE SYSTEM</button>
       </section>
 
+      <!-- Real Camera Panel -->
       <section id="panel-camera" class="panel">
-        <div class="field-group">
-          <label>Shutter Lag Compensation (ms):</label>
-          <input type="range" id="cam-offset" min="0" max="200" value="80">
-          <span style="color:var(--accent); font-size:0.85rem;"><strong id="cam-val">80</strong> ms</span>
+        <button id="btn-init-cam" class="btn-action accent">📷 เปิดใช้งานกล้องมือถือ (Init Camera)</button>
+        <div class="viewfinder-container">
+          <video id="webcam" autoplay playsinline muted></video>
+          <div class="viewfinder-overlay"></div>
         </div>
+        <div class="field-group">
+          <label>Shutter Compensation Offset (ms):</label>
+          <input type="range" id="cam-offset" min="0" max="250" value="60">
+          <span style="color:var(--accent); font-size:0.8rem;"><strong id="cam-val">60</strong> ms</span>
+        </div>
+        <label>ภาพที่ถ่ายได้สะสม:</label>
+        <div class="gallery-preview" id="gallery"></div>
       </section>
 
+      <!-- Real Flash Panel -->
       <section id="panel-flash" class="panel">
+        <button id="btn-init-flash" class="btn-action accent">⚡ ขอสิทธิ์เปิดแฟลชหลอดจริง (Init Flash Driver)</button>
+        <div class="field-group" style="margin-top:10px;">
+          <label>Torch Power On Delay (ms):</label>
+          <input type="range" id="flash-offset" min="0" max="150" value="20">
+          <span style="color:var(--accent); font-size:0.8rem;"><strong id="flash-val">20</strong> ms</span>
+        </div>
         <div class="field-group">
-          <label>Torch Driver Delay (ms):</label>
-          <input type="range" id="flash-offset" min="0" max="100" value="25">
-          <span style="color:var(--accent); font-size:0.85rem;"><strong id="flash-val">25</strong> ms</span>
+          <label>Flash Duration (ms):</label>
+          <input type="number" id="flash-duration" value="100" min="30" max="500">
         </div>
       </section>
     </main>
@@ -148,10 +191,14 @@
     </footer>
   </div>
 
+  <canvas id="hidden-canvas" style="display:none;"></canvas>
+
   <script>
     const logBox = document.getElementById('log-box');
-    const flashOverlay = document.getElementById('flash-overlay');
     const statusEl = document.getElementById('peer-status');
+    const videoEl = document.getElementById('webcam');
+    const galleryEl = document.getElementById('gallery');
+    const canvasEl = document.getElementById('hidden-canvas');
     
     function sysLog(msg) {
       const time = new Date().toISOString().split('T')[1].slice(0, -1);
@@ -161,78 +208,69 @@
 
     let currentRole = 'main';
     let peer = null;
-    let connections = []; // เก็บสายน้องๆ มือถือทุกเครื่องที่ต่อเข้ามา
+    let connections = [];
+    
+    // Hardware API Variables
+    let videoTrack = null;
+    let torchSupported = false;
 
-    // 1. ตรวจสอบว่าเปิดมาในฐานะ Client ที่สแกน QR มาหรือไม่?
+    // Check URL parameters for Host/Client mode
     const urlParams = new URLSearchParams(window.location.search);
     const targetHostId = urlParams.get('host');
 
     if (targetHostId) {
-      // หน้ามือถือเพื่อน (Client Mode)
       document.getElementById('qr-container').style.display = 'none';
-      statusEl.textContent = '⚡ กำลังเชื่อมต่อไปยังเครื่อง Host...';
+      statusEl.textContent = '⚡ กำลังเชื่อมต่อไปยัง Host...';
       initClientPeer(targetHostId);
     } else {
-      // หน้าคอมเรา (Host Mode)
       initHostPeer();
     }
 
-    // ---------------- Host Logic ----------------
     function initHostPeer() {
-      peer = new Peer(); // สุ่มสร้าง Peer ID
-
+      peer = new Peer();
       peer.on('open', (id) => {
-        statusEl.textContent = `🟢 เครื่องหลักพร้อมใช้งาน (Connected Devices: 0)`;
-        
-        // สร้าง QR Code โดยใส่ URL ปัจจุบัน + ?host=YOUR_ID
+        statusEl.textContent = `🟢 เครื่องหลักพร้อมใช้งาน (Peers: 0)`;
         const connectUrl = `${window.location.origin}${window.location.pathname}?host=${id}`;
         new QRCode(document.getElementById("qrcode"), {
           text: connectUrl,
-          width: 128,
-          height: 128
+          width: 110,
+          height: 110
         });
-        sysLog(`Host Created ID: ${id}`);
+        sysLog(`Host ID Created: ${id}`);
       });
 
-      // เมื่อมือถือเพื่อนสแกนต่อเข้ามา
       peer.on('connection', (conn) => {
         connections.push(conn);
-        statusEl.textContent = `🟢 เชื่อมต่อมือถือแล้ว (${connections.length} เครื่อง)`;
-        sysLog(`📱 มือถือเครื่องใหม่ต่อเข้ามาแล้ว!`);
-
+        statusEl.textContent = `🟢 เชื่อมต่อแล้ว (${connections.length} เครื่อง)`;
+        sysLog(`📱 อุปกรณ์ใหม่เชื่อมต่อเข้ามา!`);
         conn.on('data', (data) => handleIncomingMessage(data));
         conn.on('close', () => {
           connections = connections.filter(c => c !== conn);
-          statusEl.textContent = `🟢 เชื่อมต่อมือถือแล้ว (${connections.length} เครื่อง)`;
+          statusEl.textContent = `🟢 เชื่อมต่อแล้ว (${connections.length} เครื่อง)`;
         });
       });
     }
 
-    // ---------------- Client Mobile Logic ----------------
     function initClientPeer(hostId) {
       peer = new Peer();
-
       peer.on('open', () => {
         const conn = peer.connect(hostId);
         connections.push(conn);
-
         conn.on('open', () => {
-          statusEl.textContent = '🟢 เชื่อมต่อกับเครื่องหลักสำเร็จ!';
-          sysLog('Connected to Host successfully!');
+          statusEl.textContent = '🟢 เชื่อมต่อกับเครื่อง Host สำเร็จ!';
+          sysLog('Connected to Host!');
         });
-
         conn.on('data', (data) => handleIncomingMessage(data));
       });
     }
 
-    // ---------------- Broadcast Function ----------------
     function broadcastPayload(payload) {
       connections.forEach(conn => {
         if (conn.open) conn.send(payload);
       });
     }
 
-    // ---------------- UI & Logic Execution ----------------
+    // Role Switching
     document.querySelectorAll('.role-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
@@ -241,7 +279,7 @@
         e.target.classList.add('active');
         currentRole = e.target.dataset.role;
         document.getElementById(`panel-${currentRole}`).classList.add('active');
-        sysLog(`Switched Role -> ${currentRole.toUpperCase()}`);
+        sysLog(`Role Switched -> ${currentRole.toUpperCase()}`);
       });
     });
 
@@ -252,14 +290,50 @@
       document.getElementById('flash-val').textContent = e.target.value;
     });
 
-    // ปุ่ม FIRE
+    // --- HARDWARE 1: REAL CAMERA INITIALIZATION ---
+    document.getElementById('btn-init-cam').addEventListener('click', async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { exact: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        }).catch(async () => {
+          return await navigator.mediaDevices.getUserMedia({ video: true });
+        });
+
+        videoEl.srcObject = stream;
+        videoTrack = stream.getVideoTracks()[0];
+        sysLog('📷 กล้องหลังพร้อมใช้งาน!');
+      } catch (err) {
+        sysLog(`❌ ไม่สามารถเข้าถึงกล้องได้: ${err.message}`);
+      }
+    });
+
+    // --- HARDWARE 2: REAL HARDWARE FLASH (TORCH) INITIALIZATION ---
+    document.getElementById('btn-init-flash').addEventListener('click', async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { exact: "environment" } }
+        });
+        videoTrack = stream.getVideoTracks()[0];
+        const capabilities = videoTrack.getCapabilities ? videoTrack.getCapabilities() : {};
+
+        if (capabilities.torch) {
+          torchSupported = true;
+          sysLog('⚡ ตรวจพบแฟลชหลอดจริง (Hardware Torch Ready)!');
+        } else {
+          torchSupported = false;
+          sysLog('⚠️ อุปกรณ์ไม่รองรับ Torch API หรือใช้กล้องหน้า (ระบบจะใช้วาบหน้าจอแทน)');
+        }
+      } catch (err) {
+        sysLog(`❌ เปิดใช้งานแฟลชล้มเหลว: ${err.message}`);
+      }
+    });
+
+    // --- TRIGGER EXECUTION ---
     document.getElementById('btn-fire').addEventListener('click', () => {
       if (currentRole !== 'main') return;
       const count = parseInt(document.getElementById('burst-count').value);
       const interval = parseInt(document.getElementById('burst-interval').value);
-
-      // เผื่อเวลา P2P Network Latency ไว้ 300ms
-      const startMasterTime = performance.now() + 300; 
+      const startMasterTime = performance.now() + 350;
 
       const payload = {
         type: 'BURST_COMMAND',
@@ -268,18 +342,15 @@
         interval: interval
       };
 
-      // ยิงบอกมือถือทุกเครื่องที่เชื่อมอยู่
       broadcastPayload(payload);
-      // รันที่ตัวเองด้วย
       handleIncomingMessage(payload);
-      sysLog(`[MAIN] ยิงคำสั่งไปมือถือ ${connections.length} เครื่อง!`);
+      sysLog(`[MAIN] ยิงคำสั่งฮาร์ดแวร์ไป ${connections.length} เครื่อง!`);
     });
 
-    // รับคำสั่งและสั่งฮาร์ดแวร์ยิง
     function handleIncomingMessage(data) {
       if (data.type !== 'BURST_COMMAND') return;
 
-      sysLog(`[${currentRole.toUpperCase()}] รับคำสั่งถ่าย ${data.count} รอบ`);
+      sysLog(`[${currentRole.toUpperCase()}] สั่งงานฮาร์ดแวร์ ${data.count} รอบ`);
 
       const offset = currentRole === 'camera' 
         ? parseInt(document.getElementById('cam-offset').value)
@@ -293,18 +364,68 @@
         if (delay > 0) {
           setTimeout(() => {
             if (currentRole === 'camera') {
-              sysLog(`📸 [CAM] กดชัตเตอร์ #${i + 1}`);
+              captureRealPhoto(i + 1);
             } else if (currentRole === 'flash') {
-              sysLog(`⚡ [FLASH] แฟลชยิงวาบ #${i + 1}`);
-              flashOverlay.style.opacity = '1';
-              setTimeout(() => { flashOverlay.style.opacity = '0'; }, 120);
+              triggerRealHardwareFlash(i + 1);
             }
           }, delay);
         }
       }
     }
 
-    sysLog('WebRTC P2P Engine Ready.');
+    // Capture Real Photo from Video Stream
+    function captureRealPhoto(shotNum) {
+      if (!videoEl.srcObject) {
+        sysLog(`📸 [CAM #${shotNum}] ยังไม่ได้เปิดกล้อง!`);
+        return;
+      }
+      canvasEl.width = videoEl.videoWidth || 640;
+      canvasEl.height = videoEl.videoHeight || 480;
+      const ctx = canvasEl.getContext('2d');
+      ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+      
+      const imgUrl = canvasEl.toDataURL('image/jpeg', 0.85);
+      const img = document.createElement('img');
+      img.src = imgUrl;
+      galleryEl.prepend(img);
+
+      sysLog(`📸 [CAM] ถ่ายภาพจริงสำเร็จ #${shotNum}`);
+    }
+
+    // Trigger Real Hardware Flash Light
+    async function triggerRealHardwareFlash(shotNum) {
+      const flashDuration = parseInt(document.getElementById('flash-duration').value) || 100;
+
+      if (videoTrack && torchSupported) {
+        try {
+          // Hardware Flash LED On
+          await videoTrack.applyConstraints({ advanced: [{ torch: true }] });
+          sysLog(`⚡ [FLASH] ไฟแฟลชหลอดจริงเปิดแล้ว #${shotNum}`);
+
+          setTimeout(async () => {
+            // Hardware Flash LED Off
+            await videoTrack.applyConstraints({ advanced: [{ torch: false }] });
+          }, flashDuration);
+        } catch (e) {
+          sysLog(`⚡ Flash Error: ${e.message}`);
+        }
+      } else {
+        // Fallback Screen Flash
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.background = 'white';
+        overlay.style.zIndex = '99999';
+        document.body.appendChild(overlay);
+        sysLog(`⚡ [FLASH] หน้าจอสว่างวาบแทนแฟลช #${shotNum}`);
+
+        setTimeout(() => {
+          overlay.remove();
+        }, flashDuration);
+      }
+    }
+
+    sysLog('Hardware Control Engine Ready.');
   </script>
 </body>
 </html>
